@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import DoctorLayoutWrapper from '../../../components/layout/DoctorLayoutWrapper';
+import Link from 'next/link';
 
 export default function Patients() {
   const [patients, setPatients] = useState([]);
@@ -30,28 +31,29 @@ export default function Patients() {
   return (
     <DoctorLayoutWrapper pageTitle="Patient Records">
       <div className="flex flex-col gap-6">
-        <h2 className="text-2xl font-bold">Table</h2>
+        <h2 className="text-2xl font-bold">Patient Records</h2>
+
         {loading ? (
           <p>Loading...</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white/20 backdrop-blur-md rounded-xl shadow-xl divide-y divide-gray-200">
-              <thead>
-                <tr className="text-left">
-                  <th className="px-4 py-2">ID</th>
-                  <th className="px-4 py-2">Code</th>
-                  <th className="px-4 py-2">Name</th>
-                  <th className="px-4 py-2">Gender</th>
-                  <th className="px-4 py-2">DOB</th>
-                  <th className="px-4 py-2">Contact</th>
-                  <th className="px-4 py-2">Email</th>
-                  <th className="px-4 py-2">Status</th>
+            <table className="min-w-full bg-white rounded-lg shadow-md border border-gray-200">
+              <thead className="bg-blue-700 text-white">
+                <tr>
+                  <th className="px-4 py-2 text-left">Code</th>
+                  <th className="px-4 py-2 text-left">Name</th>
+                  <th className="px-4 py-2 text-left">Gender</th>
+                  <th className="px-4 py-2 text-left">Date of Birth</th>
+                  <th className="px-4 py-2 text-left">Contact</th>
+                  <th className="px-4 py-2 text-left">Email</th>
+                  <th className="px-4 py-2 text-left">Status</th>
+                  <th className="px-4 py-2 text-left">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+
+              <tbody className="divide-y divide-gray-200">
                 {patients.map((p) => (
-                  <tr key={p.id} className="hover:bg-white/10">
-                    <td className="px-4 py-2">{p.id}</td>
+                  <tr key={p.id} className="hover:bg-gray-50">
                     <td className="px-4 py-2">{p.patient_code}</td>
                     <td className="px-4 py-2">{p.patient_name}</td>
                     <td className="px-4 py-2">{p.patient_gender}</td>
@@ -59,6 +61,19 @@ export default function Patients() {
                     <td className="px-4 py-2">{p.patient_contact}</td>
                     <td className="px-4 py-2">{p.patient_email}</td>
                     <td className="px-4 py-2">{p.patient_status}</td>
+                    <td className="px-4 py-2 flex gap-2">
+                      {/* Edit button */}
+                      <Link
+                        href={`/doctor/add-patient?edit=true&id=${p.id}`}
+                        className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
+                      >
+                        Edit
+                      </Link>
+                      {/* View button placeholder */}
+                      <button className="px-3 py-1 bg-blue-500 text-white rounded opacity-50 cursor-not-allowed">
+                        View
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

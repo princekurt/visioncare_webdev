@@ -4,7 +4,8 @@ import Header from './Header';
 export default function DoctorLayoutWrapper({ children, pageTitle }) {
   const doctorInfo = {
     name: 'Dr. Jane Smith',
-    specialty: 'Optometrist', 
+    specialty: 'Optometrist',
+    avatar: '/doctor-avatar.png', // make sure this exists in /public
   };
 
   return (
@@ -12,9 +13,12 @@ export default function DoctorLayoutWrapper({ children, pageTitle }) {
       {/* Persistent Sidebar */}
       <Sidebar />
 
+      {/* Main content */}
       <div className="flex-1 p-6">
-        {/* Dynamic Header */}
+        {/* Dynamic Header per page */}
         <Header title={pageTitle} doctor={doctorInfo} />
+
+        {/* Page content */}
         <div className="mt-6">{children}</div>
       </div>
     </div>
