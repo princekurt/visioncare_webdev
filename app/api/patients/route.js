@@ -1,40 +1,37 @@
-import { NextResponse } from 'next/server';
-import { getConnection } from '../../../lib/db';
+import { supabase } from '../../../lib/supabase';
 
 export async function GET() {
-  try {
-    const conn = await getConnection();
-    const [rows] = await conn.query('SELECT * FROM patients ORDER BY id DESC');
-    await conn.end();
-    return NextResponse.json(rows); // must return JSON
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'Failed to fetch patients' }, { status: 500 });
-  }
+  const { data, error } = await supabase
+    .from('tbl_patient')
+    .select('*')
+    .order('id', { ascending: false });
+
+  if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+
+  return new Response(JSON.stringify(data), { status: 200 });
 }
 
 export async function POST(req) {
   try {
-    const data = await req.json();
-    const conn = await getConnection();
+    const body = await req.json();
+    const { patient_name, patient_gender, patient_address, patient_dob, patient_contact, patient_email } = body;
 
-    const { name, age, gender, address, dob, contact, email, status } = data;
+    const { data, error } = await supabase
+      .from('tbl_patient')
+      .insert([{
+        patient_name,
+        patient_gender,
+        patient_address,
+        patient_dob,
+        patient_contact,
+        patient_email
+      }])
+      .select(); // returns the inserted row including id and patient_code
 
-    const [result] = await conn.query(
-      'INSERT INTO patients (name, age, gender, address, dob, contact, email, status, last_visit) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURDATE())',
-      [name, age, gender, address, dob, contact, email, status]
-    );
+    if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
 
-    await conn.end();
-
-    // Fetch inserted patient including patient_code
-    const conn2 = await getConnection();
-    const [rows] = await conn2.query('SELECT * FROM patients WHERE id = ?', [result.insertId]);
-    await conn2.end();
-
-    return NextResponse.json(rows[0]);
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'Failed to add patient' }, { status: 500 });
+    return new Response(JSON.stringify({ success: true, patient: data[0] }), { status: 201 });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
 }
