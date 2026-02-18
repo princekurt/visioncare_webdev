@@ -11,12 +11,20 @@ export default function PatientLayoutWrapper({ children, pageTitle }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-[#F8F9FA] font-sans">
+      {/* Patient Sidebar */}
       <SidebarPatient />
 
-      <div className="flex-1 p-6">
-        <HeaderPatient title={pageTitle} patient={patientInfo} />
-        {children}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        <div className="p-6 pb-0">
+          <HeaderPatient title={pageTitle} patient={patientInfo} />
+        </div>
+        
+        <main className="flex-1 overflow-y-auto p-6 pt-2">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );
