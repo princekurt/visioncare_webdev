@@ -30,7 +30,7 @@ export default function Patients() {
   return (
     <DoctorLayoutWrapper pageTitle="Patient Records">
       <div className="flex flex-col gap-6">
-        <h2 className="text-2xl font-bold">Patient Records</h2>
+        <h2 className="text-2xl font-bold">Table</h2>
         {loading ? (
           <p>Loading...</p>
         ) : (
