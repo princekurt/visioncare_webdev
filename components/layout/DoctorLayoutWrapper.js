@@ -4,8 +4,7 @@ import Header from './Header';
 export default function DoctorLayoutWrapper({ children, pageTitle }) {
   const doctorInfo = {
     name: 'Dr. Jane Smith',
-    specialty: 'Optometrist',
-    avatar: '/doctor-avatar.png', // put your image in /public
+    specialty: 'Optometrist', 
   };
 
   return (

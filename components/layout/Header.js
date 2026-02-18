@@ -13,11 +13,7 @@ export default function Header({ title, doctor }) {
             <p className="font-semibold">{doctor.name}</p>
             <p className="text-sm text-black-200">{doctor.specialty}</p>
           </div>
-          <img
-            src={doctor.avatar}
-            alt={doctor.name}
-            className="w-12 h-12 rounded-full border-2 border-white/50 shadow-md"
-          />
+          
         </div>
       </div>
     </div>
