@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, Suspense } from 'react';
 import DoctorLayoutWrapper from '../../../components/layout/DoctorLayoutWrapper';
 import { FaStethoscope, FaSearch, FaUserCheck, FaRobot, FaCalendarAlt, FaHistory } from 'react-icons/fa';
 
-// 1. Initial State to prevent "uncontrolled input" errors
 const initialFormState = {
   patientId: '',
   fullName: '',
@@ -30,12 +29,15 @@ function CheckupContent() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]); 
-  const [selectedVisit, setSelectedVisit] = useState(null); // State for the Detail Modal
+  const [selectedVisit, setSelectedVisit] = useState(null);
+  
+  // AI States
+  const [aiSuggestion, setAiSuggestion] = useState("Select a patient to enable diagnostic suggestions.");
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  
   const dropdownRef = useRef(null);
-
   const [form, setForm] = useState(initialFormState);
 
-  // Load patients and history
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -53,6 +55,55 @@ function CheckupContent() {
     };
     fetchData();
   }, []);
+
+  // MANUAL AI ANALYSIS FUNCTION
+  const handleAiAnalysis = async () => {
+  if (!form.diagnosis && !form.prescription) {
+    setAiSuggestion("Please enter clinical notes or a prescription to analyze.");
+    return;
+  }
+
+  setIsAiLoading(true);
+  setAiSuggestion("Analyzing clinical data...");
+
+  try {
+    const res = await fetch('/api/ai/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        diagnosis: form.diagnosis,
+        prescription: form.prescription,
+        metrics: { 
+          age: form.age, 
+          pinholeOD: form.pinholeOD, 
+          pinholeOS: form.pinholeOS,
+          monoPDO: form.monoPDO,
+          monoPOS: form.monoPOS
+        }
+      }),
+    });
+
+    const data = await res.json();
+    
+      // In your handleAiAnalysis function, update the string template:
+      if (data.summary) {
+      setAiSuggestion(
+      `SUMMARY: ${data.summary}\n\n` +
+      `TRENDS: ${data.trends}\n\n` +
+      `OPTIONS: ${data.options}\n\n` +
+        `EDUCATIONAL: ${data.educational_notes}\n\n` +
+      `⚠️ ${data.disclaimer || "Consult a licensed professional."}` // Added this line
+      );
+    }else {
+      setAiSuggestion(data.analysis || "AI could not generate a response.");
+    }
+  } catch (err) {
+    console.error(err);
+    setAiSuggestion("AI Pilot is currently unavailable.");
+  } finally {
+    setIsAiLoading(false);
+  }
+};
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -92,6 +143,7 @@ function CheckupContent() {
     });
     setSearchTerm(patient.patient_name);
     setShowDropdown(false);
+    setAiSuggestion(`Ready to analyze ${patient.patient_name}'s vision data.`);
   };
 
   const handleChange = (e) => {
@@ -124,6 +176,7 @@ function CheckupContent() {
 
       setForm(initialFormState);
       setSearchTerm('');
+      setAiSuggestion("Select a patient to enable diagnostic suggestions.");
     } catch (err) {
       alert("Error: " + err.message);
     } finally {
@@ -133,7 +186,6 @@ function CheckupContent() {
 
   const patientHistory = history.filter(h => h.patient_id === form.patientId);
 
-  // Modal Component for viewing details
   const HistoryModal = () => {
     if (!selectedVisit) return null;
 
@@ -187,7 +239,6 @@ function CheckupContent() {
 
   return (
     <div className="max-w-6xl mx-auto pb-10">
-      {/* Header & Search Bar */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-orange-100 text-[#F17343] rounded-2xl shadow-sm">
@@ -235,7 +286,6 @@ function CheckupContent() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-8">
-          
           <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm">
             <div className="flex items-center gap-3 mb-8">
               <div className="w-1.5 h-6 bg-[#F17343] rounded-full" />
@@ -387,6 +437,7 @@ function CheckupContent() {
                 onClick={() => {
                   setForm(initialFormState);
                   setSearchTerm('');
+                  setAiSuggestion("Select a patient to enable diagnostic suggestions.");
                 }}
                 className="w-full py-3 bg-white/5 text-white/50 rounded-2xl font-bold text-xs uppercase hover:bg-white/10 transition-all"
               >
@@ -395,16 +446,28 @@ function CheckupContent() {
             </div>
           </div>
 
-          <div className="bg-orange-50 border-2 border-dashed border-orange-200 rounded-[2rem] p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-white rounded-lg text-[#F17343] shadow-sm">
-                <FaRobot size={18} />
+          {/* AI PILOT BOX - MANUAL VERSION */}
+          <div className="bg-orange-50 border-2 border-dashed border-orange-200 rounded-[2rem] p-6 min-h-[180px] flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white rounded-lg text-[#F17343] shadow-sm">
+                  <FaRobot size={18} className={isAiLoading ? "animate-bounce" : ""} />
+                </div>
+                <p className="text-[10px] font-black text-[#F17343] uppercase tracking-widest">AI Clinical Pilot</p>
               </div>
-              <p className="text-[10px] font-black text-[#F17343] uppercase tracking-widest">AI Clinical Pilot</p>
+              
+              <button 
+                onClick={handleAiAnalysis}
+                disabled={isAiLoading || !form.patientId}
+                className="text-[10px] font-black bg-[#F17343] text-white px-3 py-1.5 rounded-xl uppercase tracking-tighter hover:bg-[#d95f2e] transition-colors disabled:opacity-30"
+              >
+                {isAiLoading ? "Processing..." : "Analyze"}
+              </button>
             </div>
-            <p className="text-xs text-slate-500 leading-relaxed font-medium italic">
-              {form.fullName ? `Ready to analyze ${form.fullName}'s vision data.` : "Select a patient to enable diagnostic suggestions."}
-            </p>
+            
+            <div className={`text-xs text-slate-500 leading-relaxed font-medium italic transition-opacity duration-300 ${isAiLoading ? 'opacity-50' : 'opacity-100'}`}>
+              <p className="whitespace-pre-wrap">{aiSuggestion}</p>
+            </div>
           </div>
         </div>
       </div>
