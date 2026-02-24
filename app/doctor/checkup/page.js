@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 import DoctorLayoutWrapper from '../../../components/layout/DoctorLayoutWrapper';
-import { FaStethoscope, FaSearch, FaUserCheck, FaRobot, FaCalendarAlt } from 'react-icons/fa';
+import { FaStethoscope, FaSearch, FaUserCheck, FaRobot, FaCalendarAlt, FaHistory } from 'react-icons/fa';
 
 // 1. Initial State to prevent "uncontrolled input" errors
 const initialFormState = {
@@ -29,26 +29,31 @@ function CheckupContent() {
   const [filteredPatients, setFilteredPatients] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState([]); 
+  const [selectedVisit, setSelectedVisit] = useState(null); // State for the Detail Modal
   const dropdownRef = useRef(null);
 
-  // Initialize form with the full state object
   const [form, setForm] = useState(initialFormState);
 
-  // Load patients for search
+  // Load patients and history
   useEffect(() => {
-    const fetchPatients = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch('/api/patients');
-        const data = await res.json();
-        setPatients(data);
+        const [pRes, hRes] = await Promise.all([
+          fetch('/api/patients'),
+          fetch('/api/checkups')
+        ]);
+        const pData = await pRes.json();
+        const hData = await hRes.json();
+        setPatients(pData);
+        setHistory(hData);
       } catch (err) {
-        console.error("Error fetching patients:", err);
+        console.error("Error fetching data:", err);
       }
     };
-    fetchPatients();
+    fetchData();
   }, []);
 
-  // Close search dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -95,7 +100,6 @@ function CheckupContent() {
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
-    
     if (!form.patientId) {
       alert("Please search and select a patient first!");
       return;
@@ -114,7 +118,10 @@ function CheckupContent() {
 
       alert('Checkup record saved to database!');
       
-      // Reset form properly using the initial state object
+      const hRes = await fetch('/api/checkups');
+      const hData = await hRes.json();
+      setHistory(hData);
+
       setForm(initialFormState);
       setSearchTerm('');
     } catch (err) {
@@ -122,6 +129,57 @@ function CheckupContent() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const patientHistory = history.filter(h => h.patient_id === form.patientId);
+
+  // Modal Component for viewing details
+  const HistoryModal = () => {
+    if (!selectedVisit) return null;
+
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="bg-[#6D6E70] p-6 text-white flex justify-between items-center">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Past Examination Record</p>
+              <h3 className="text-xl font-black uppercase">{new Date(selectedVisit.date_prescribed).toLocaleDateString()}</h3>
+            </div>
+            <button onClick={() => setSelectedVisit(null)} className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full hover:bg-white/20 transition-all font-bold">✕</button>
+          </div>
+
+          <div className="p-8 grid grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-black text-[#F17343] uppercase tracking-widest border-b border-orange-100 pb-2">Vision Metrics</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div><p className="text-[9px] font-bold text-slate-400 uppercase">Pinhole OD</p><p className="font-bold text-[#6D6E70]">{selectedVisit.pinhole_od || 'N/A'}</p></div>
+                <div><p className="text-[9px] font-bold text-slate-400 uppercase">Pinhole OS</p><p className="font-bold text-[#6D6E70]">{selectedVisit.pinhole_os || 'N/A'}</p></div>
+                <div><p className="text-[9px] font-bold text-slate-400 uppercase">PD OD</p><p className="font-bold text-[#6D6E70]">{selectedVisit.mono_pd_od || 'N/A'}</p></div>
+                <div><p className="text-[9px] font-bold text-slate-400 uppercase">PD OS</p><p className="font-bold text-[#6D6E70]">{selectedVisit.mono_pd_os || 'N/A'}</p></div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-black text-[#F17343] uppercase tracking-widest border-b border-orange-100 pb-2">Prescription</h4>
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 min-h-[80px]">
+                <pre className="text-xs font-mono text-[#6D6E70] whitespace-pre-wrap">{selectedVisit.new_prescription || 'No Rx recorded'}</pre>
+              </div>
+            </div>
+
+            <div className="col-span-2 space-y-2">
+              <h4 className="text-[10px] font-black text-[#F17343] uppercase tracking-widest">Clinical Diagnosis</h4>
+              <p className="text-sm text-slate-600 leading-relaxed bg-orange-50/50 p-4 rounded-2xl italic border border-orange-100">
+                "{selectedVisit.diagnosis || 'No diagnosis notes available.'}"
+              </p>
+            </div>
+          </div>
+
+          <div className="p-6 bg-slate-50 border-t border-slate-100 text-center text-[10px] font-bold text-slate-400 uppercase">
+            Attending Optometrist: {selectedVisit.attending_optometrist}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const inputClass = "w-full p-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#F17343] focus:ring-4 focus:ring-[#F17343]/10 transition-all outline-none text-[#6D6E70] font-medium placeholder:text-slate-400";
@@ -176,8 +234,8 @@ function CheckupContent() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Side: Assessment Form */}
         <div className="lg:col-span-8 space-y-8">
+          
           <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm">
             <div className="flex items-center gap-3 mb-8">
               <div className="w-1.5 h-6 bg-[#F17343] rounded-full" />
@@ -237,9 +295,55 @@ function CheckupContent() {
               </div>
             </div>
           </div>
+
+          <div className="bg-slate-50 rounded-[2rem] p-8 border border-slate-200 border-dashed">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-white rounded-lg text-slate-400 shadow-sm">
+                <FaHistory size={16} />
+              </div>
+              <h3 className="font-black text-[#6D6E70] uppercase text-sm tracking-widest">Medical History</h3>
+            </div>
+
+            {!form.patientId ? (
+              <div className="py-10 text-center">
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Select a patient to view previous visits</p>
+              </div>
+            ) : patientHistory.length === 0 ? (
+              <div className="py-10 text-center">
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">No previous checkups found</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {patientHistory.map((visit, index) => (
+                  <div 
+                  key={`${visit.id}-${index}`}
+                  className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between hover:border-[#F17343]/30 transition-all group"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-black text-[#F17343] bg-orange-50 px-2 py-0.5 rounded-md uppercase">
+                          {new Date(visit.date_prescribed).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">by {visit.attending_optometrist}</span>
+                      </div>
+                      <p className="text-sm font-bold text-[#6D6E70] line-clamp-1">{visit.diagnosis || 'No Diagnosis recorded'}</p>
+                      <p className="text-[10px] text-slate-400 font-mono mt-1">Rx: {visit.new_prescription || 'N/A'}</p>
+                    </div>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={() => setSelectedVisit(visit)}
+                        className="text-[10px] font-black text-[#F17343] uppercase hover:underline"
+                      >
+                        View Details
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Right Side: Clinical Notes */}
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-[#6D6E70] rounded-[2rem] p-8 text-white shadow-xl">
             <h3 className="font-black uppercase text-xs tracking-[0.2em] mb-6 opacity-80 flex items-center gap-2">
@@ -304,11 +408,11 @@ function CheckupContent() {
           </div>
         </div>
       </div>
+      <HistoryModal />
     </div>
   );
 }
 
-// Wrapping in Suspense for Vercel build safety
 export default function Checkup() {
   return (
     <DoctorLayoutWrapper pageTitle="Patient Checkup">
