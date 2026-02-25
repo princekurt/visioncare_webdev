@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 import DoctorLayoutWrapper from '../../../components/layout/DoctorLayoutWrapper';
-import { FaStethoscope, FaSearch, FaUserCheck, FaRobot, FaCalendarAlt, FaHistory } from 'react-icons/fa';
+import { FaStethoscope, FaSearch, FaUserCheck, FaRobot, FaCalendarAlt, FaHistory, FaInfoCircle } from 'react-icons/fa';
 
 const initialFormState = {
   patientId: '',
@@ -26,16 +26,17 @@ function CheckupContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [patients, setPatients] = useState([]);
   const [filteredPatients, setFilteredPatients] = useState([]);
-  const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]); 
   const [selectedVisit, setSelectedVisit] = useState(null);
   
   // AI States
   const [aiSuggestion, setAiSuggestion] = useState("Select a patient to enable diagnostic suggestions.");
+  const [rawAiData, setRawAiData] = useState(null); 
   const [isAiLoading, setIsAiLoading] = useState(false);
   
   const dropdownRef = useRef(null);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [form, setForm] = useState(initialFormState);
 
   useEffect(() => {
@@ -56,77 +57,51 @@ function CheckupContent() {
     fetchData();
   }, []);
 
-  // MANUAL AI ANALYSIS FUNCTION
   const handleAiAnalysis = async () => {
-  if (!form.diagnosis && !form.prescription) {
-    setAiSuggestion("Please enter clinical notes or a prescription to analyze.");
-    return;
-  }
-
-  setIsAiLoading(true);
-  setAiSuggestion("Analyzing clinical data...");
-
-  try {
-    const res = await fetch('/api/ai/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        diagnosis: form.diagnosis,
-        prescription: form.prescription,
-        metrics: { 
-          age: form.age, 
-          pinholeOD: form.pinholeOD, 
-          pinholeOS: form.pinholeOS,
-          monoPDO: form.monoPDO,
-          monoPOS: form.monoPOS
-        }
-      }),
-    });
-
-    const data = await res.json();
-    
-      // In your handleAiAnalysis function, update the string template:
-      if (data.summary) {
-      setAiSuggestion(
-      `SUMMARY: ${data.summary}\n\n` +
-      `TRENDS: ${data.trends}\n\n` +
-      `OPTIONS: ${data.options}\n\n` +
-        `EDUCATIONAL: ${data.educational_notes}\n\n` +
-      `⚠️ ${data.disclaimer || "Consult a licensed professional."}` // Added this line
-      );
-    }else {
-      setAiSuggestion(data.analysis || "AI could not generate a response.");
+    if (!form.diagnosis && !form.prescription) {
+      setAiSuggestion("Please enter clinical notes or a prescription to analyze.");
+      return;
     }
-  } catch (err) {
-    console.error(err);
-    setAiSuggestion("AI Pilot is currently unavailable.");
-  } finally {
-    setIsAiLoading(false);
-  }
-};
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowDropdown(false);
+    setIsAiLoading(true);
+    setAiSuggestion("Analyzing clinical data...");
+
+    try {
+      const res = await fetch('/api/ai/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          diagnosis: form.diagnosis,
+          prescription: form.prescription,
+          metrics: { 
+            age: form.age, 
+            pinholeOD: form.pinholeOD, 
+            pinholeOS: form.pinholeOS,
+            monoPDO: form.monoPDO,
+            monoPOS: form.monoPOS
+          }
+        }),
+      });
+
+      const data = await res.json();
+      setRawAiData(data); 
+
+      if (data.summary) {
+        setAiSuggestion(
+          `SUMMARY: ${data.summary}\n\n` +
+          `TRENDS: ${data.trends}\n\n` +
+          `OPTIONS: ${data.options}\n\n` +
+          `EDUCATIONAL: ${data.educational_notes}\n\n` +
+          `⚠️ ${data.disclaimer || "Consult a licensed professional."}`
+        );
+      } else {
+        setAiSuggestion(data.analysis || "AI could not generate a response.");
       }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleSearch = (e) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-    if (value.length > 0) {
-      const filtered = patients.filter(p =>
-        p.patient_name.toLowerCase().includes(value.toLowerCase()) ||
-        p.id.toString().includes(value)
-      );
-      setFilteredPatients(filtered);
-      setShowDropdown(true);
-    } else {
-      setShowDropdown(false);
+    } catch (err) {
+      console.error(err);
+      setAiSuggestion("AI Pilot is currently unavailable.");
+    } finally {
+      setIsAiLoading(false);
     }
   };
 
@@ -144,6 +119,7 @@ function CheckupContent() {
     setSearchTerm(patient.patient_name);
     setShowDropdown(false);
     setAiSuggestion(`Ready to analyze ${patient.patient_name}'s vision data.`);
+    setRawAiData(null); 
   };
 
   const handleChange = (e) => {
@@ -159,16 +135,21 @@ function CheckupContent() {
 
     setLoading(true);
     try {
+      const payload = {
+        ...form,
+        ai_analysis: rawAiData 
+      };
+
       const res = await fetch('/api/checkups', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       const result = await res.json();
       if (!res.ok) throw new Error(result.error);
 
-      alert('Checkup record saved to database!');
+      alert('Checkup record and AI Insight saved successfully!');
       
       const hRes = await fetch('/api/checkups');
       const hData = await hRes.json();
@@ -176,6 +157,7 @@ function CheckupContent() {
 
       setForm(initialFormState);
       setSearchTerm('');
+      setRawAiData(null);
       setAiSuggestion("Select a patient to enable diagnostic suggestions.");
     } catch (err) {
       alert("Error: " + err.message);
@@ -191,16 +173,16 @@ function CheckupContent() {
 
     return (
       <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-        <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+        <div className="bg-white rounded-[2.5rem] w-full max-w-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
           <div className="bg-[#6D6E70] p-6 text-white flex justify-between items-center">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Past Examination Record</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Examination Archive</p>
               <h3 className="text-xl font-black uppercase">{new Date(selectedVisit.date_prescribed).toLocaleDateString()}</h3>
             </div>
             <button onClick={() => setSelectedVisit(null)} className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full hover:bg-white/20 transition-all font-bold">✕</button>
           </div>
 
-          <div className="p-8 grid grid-cols-2 gap-8">
+          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8 max-h-[70vh] overflow-y-auto">
             <div className="space-y-4">
               <h4 className="text-[10px] font-black text-[#F17343] uppercase tracking-widest border-b border-orange-100 pb-2">Vision Metrics</h4>
               <div className="grid grid-cols-2 gap-4">
@@ -209,20 +191,44 @@ function CheckupContent() {
                 <div><p className="text-[9px] font-bold text-slate-400 uppercase">PD OD</p><p className="font-bold text-[#6D6E70]">{selectedVisit.mono_pd_od || 'N/A'}</p></div>
                 <div><p className="text-[9px] font-bold text-slate-400 uppercase">PD OS</p><p className="font-bold text-[#6D6E70]">{selectedVisit.mono_pd_os || 'N/A'}</p></div>
               </div>
-            </div>
-
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-black text-[#F17343] uppercase tracking-widest border-b border-orange-100 pb-2">Prescription</h4>
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 min-h-[80px]">
-                <pre className="text-xs font-mono text-[#6D6E70] whitespace-pre-wrap">{selectedVisit.new_prescription || 'No Rx recorded'}</pre>
+              <div className="mt-4">
+                <h4 className="text-[10px] font-black text-[#F17343] uppercase tracking-widest border-b border-orange-100 pb-2 mb-2">Doctor's Diagnosis</h4>
+                <p className="text-sm text-slate-600 italic bg-orange-50/50 p-3 rounded-xl border border-orange-100">
+                  "{selectedVisit.diagnosis || 'No diagnosis recorded.'}"
+                </p>
               </div>
             </div>
 
-            <div className="col-span-2 space-y-2">
-              <h4 className="text-[10px] font-black text-[#F17343] uppercase tracking-widest">Clinical Diagnosis</h4>
-              <p className="text-sm text-slate-600 leading-relaxed bg-orange-50/50 p-4 rounded-2xl italic border border-orange-100">
-                "{selectedVisit.diagnosis || 'No diagnosis notes available.'}"
-              </p>
+            {/* Polished AI Display Section */}
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-black text-[#F17343] uppercase tracking-widest border-b border-orange-100 pb-2 flex items-center gap-2">
+                <FaRobot /> AI PILOT INSIGHT
+              </h4>
+              
+              {selectedVisit.ai_analysis ? (
+                <div className="space-y-3">
+                  <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 shadow-sm">
+                    <p className="text-[9px] font-black text-blue-500 uppercase mb-1">Clinical Summary</p>
+                    <p className="text-[11px] text-slate-700 leading-relaxed font-medium">
+                      {selectedVisit.ai_analysis.summary}
+                    </p>
+                  </div>
+
+                  <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100 shadow-sm">
+                    <p className="text-[9px] font-black text-[#F17343] uppercase mb-1">Diagnostic Trends</p>
+                    <p className="text-[11px] text-slate-700 leading-relaxed font-medium">
+                      {selectedVisit.ai_analysis.trends}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-slate-50 p-10 rounded-2xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
+                  <FaInfoCircle className="text-slate-300 mb-2" size={20} />
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                    No AI data recorded
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -259,7 +265,20 @@ function CheckupContent() {
               type="text"
               placeholder="Search Patient Name or ID..."
               value={searchTerm}
-              onChange={handleSearch}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSearchTerm(value);
+                if (value.length > 0) {
+                  const filtered = patients.filter(p =>
+                    p.patient_name.toLowerCase().includes(value.toLowerCase()) ||
+                    p.id.toString().includes(value)
+                  );
+                  setFilteredPatients(filtered);
+                  setShowDropdown(true);
+                } else {
+                  setShowDropdown(false);
+                }
+              }}
               className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white border border-slate-200 focus:border-[#F17343] focus:ring-4 focus:ring-orange-50 outline-none shadow-sm font-bold text-[#6D6E70]"
             />
           </div>
@@ -355,38 +374,27 @@ function CheckupContent() {
             </div>
 
             {!form.patientId ? (
-              <div className="py-10 text-center">
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Select a patient to view previous visits</p>
-              </div>
+              <div className="py-10 text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">Select a patient to view previous visits</div>
             ) : patientHistory.length === 0 ? (
-              <div className="py-10 text-center">
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">No previous checkups found</p>
-              </div>
+              <div className="py-10 text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">No previous checkups found</div>
             ) : (
               <div className="space-y-4">
                 {patientHistory.map((visit, index) => (
-                  <div 
-                  key={`${visit.id}-${index}`}
-                  className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between hover:border-[#F17343]/30 transition-all group"
-                  >
-                    <div>
+                  <div key={`${visit.id}-${index}`} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between hover:border-[#F17343]/30 transition-all group">
+                    <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[10px] font-black text-[#F17343] bg-orange-50 px-2 py-0.5 rounded-md uppercase">
-                          {new Date(visit.date_prescribed).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {new Date(visit.date_prescribed).toLocaleDateString()}
                         </span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">by {visit.attending_optometrist}</span>
+                        {visit.ai_analysis && (
+                          <span className="text-[10px] font-black text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md uppercase flex items-center gap-1">
+                            <FaRobot size={8} /> AI Record
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm font-bold text-[#6D6E70] line-clamp-1">{visit.diagnosis || 'No Diagnosis recorded'}</p>
-                      <p className="text-[10px] text-slate-400 font-mono mt-1">Rx: {visit.new_prescription || 'N/A'}</p>
                     </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
-                        onClick={() => setSelectedVisit(visit)}
-                        className="text-[10px] font-black text-[#F17343] uppercase hover:underline"
-                      >
-                        View Details
-                      </button>
-                    </div>
+                    <button onClick={() => setSelectedVisit(visit)} className="text-[10px] font-black text-[#F17343] uppercase hover:underline ml-4">Details</button>
                   </div>
                 ))}
               </div>
@@ -403,33 +411,16 @@ function CheckupContent() {
             <div className="space-y-5">
               <div>
                 <label className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-1 block">Diagnosis</label>
-                <textarea 
-                  name="diagnosis" 
-                  value={form.diagnosis || ''} 
-                  onChange={handleChange} 
-                  className="w-full bg-white/10 border border-white/10 rounded-xl p-3 text-sm focus:bg-white/20 outline-none transition-all min-h-[100px]" 
-                  placeholder="Describe findings..."
-                />
+                <textarea name="diagnosis" value={form.diagnosis || ''} onChange={handleChange} className="w-full bg-white/10 border border-white/10 rounded-xl p-3 text-sm focus:bg-white/20 outline-none transition-all min-h-[100px]" placeholder="Describe findings..." />
               </div>
               <div>
                 <label className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-1 block">New Rx</label>
-                <textarea 
-                  name="prescription" 
-                  value={form.prescription || ''} 
-                  onChange={handleChange} 
-                  className="w-full bg-white/10 border border-white/10 rounded-xl p-3 text-sm focus:bg-white/20 outline-none transition-all font-mono" 
-                  placeholder="OD: -1.00 SPH..."
-                />
+                <textarea name="prescription" value={form.prescription || ''} onChange={handleChange} className="w-full bg-white/10 border border-white/10 rounded-xl p-3 text-sm focus:bg-white/20 outline-none transition-all font-mono" placeholder="OD: -1.00 SPH..." />
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-3 mt-8">
-              <button 
-                type="button"
-                onClick={handleSubmit}
-                disabled={loading}
-                className="w-full py-4 bg-[#F17343] text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
-              >
+              <button onClick={handleSubmit} disabled={loading} className="w-full py-4 bg-[#F17343] text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg hover:scale-[1.02] transition-all disabled:opacity-50">
                 {loading ? "Saving..." : "Save Record"}
               </button>
               <button 
@@ -437,6 +428,7 @@ function CheckupContent() {
                 onClick={() => {
                   setForm(initialFormState);
                   setSearchTerm('');
+                  setRawAiData(null);
                   setAiSuggestion("Select a patient to enable diagnostic suggestions.");
                 }}
                 className="w-full py-3 bg-white/5 text-white/50 rounded-2xl font-bold text-xs uppercase hover:bg-white/10 transition-all"
@@ -446,26 +438,18 @@ function CheckupContent() {
             </div>
           </div>
 
-          {/* AI PILOT BOX - MANUAL VERSION */}
+          {/* AI PILOT BOX */}
           <div className="bg-orange-50 border-2 border-dashed border-orange-200 rounded-[2rem] p-6 min-h-[180px] flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-white rounded-lg text-[#F17343] shadow-sm">
-                  <FaRobot size={18} className={isAiLoading ? "animate-bounce" : ""} />
-                </div>
+                <div className="p-2 bg-white rounded-lg text-[#F17343] shadow-sm"><FaRobot size={18} className={isAiLoading ? "animate-bounce" : ""} /></div>
                 <p className="text-[10px] font-black text-[#F17343] uppercase tracking-widest">AI Clinical Pilot</p>
               </div>
-              
-              <button 
-                onClick={handleAiAnalysis}
-                disabled={isAiLoading || !form.patientId}
-                className="text-[10px] font-black bg-[#F17343] text-white px-3 py-1.5 rounded-xl uppercase tracking-tighter hover:bg-[#d95f2e] transition-colors disabled:opacity-30"
-              >
+              <button onClick={handleAiAnalysis} disabled={isAiLoading || !form.patientId} className="text-[10px] font-black bg-[#F17343] text-white px-3 py-1.5 rounded-xl uppercase hover:bg-[#d95f2e] transition-all disabled:opacity-30">
                 {isAiLoading ? "Processing..." : "Analyze"}
               </button>
             </div>
-            
-            <div className={`text-xs text-slate-500 leading-relaxed font-medium italic transition-opacity duration-300 ${isAiLoading ? 'opacity-50' : 'opacity-100'}`}>
+            <div className={`text-xs text-slate-500 font-medium italic ${isAiLoading ? 'opacity-50' : 'opacity-100'}`}>
               <p className="whitespace-pre-wrap">{aiSuggestion}</p>
             </div>
           </div>

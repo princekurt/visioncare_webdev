@@ -1,53 +1,71 @@
-import { supabase } from '../../../lib/supabase';
-import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from "next/server";
+
+// Initialize Supabase Client using environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(req) {
   try {
     const body = await req.json();
 
+    // Extracting all fields from the frontend payload
+    const { 
+      patientId, 
+      diagnosis, 
+      prescription, 
+      pinholeOD, 
+      pinholeOS, 
+      monoPDO, 
+      monoPOS, 
+      datePrescribed, 
+      prescribedBy,
+      ai_analysis // This is the JSON object from the AI Pilot
+    } = body;
+
+    // Save to the correct table: tbl_checkup
     const { data, error } = await supabase
       .from('tbl_checkup')
       .insert([
         {
-          patient_id: body.patientId,
-          pinhole_od: body.pinholeOD,
-          pinhole_os: body.pinholeOS,
-          mono_pd_od: body.monoPDO,
-          mono_pd_os: body.monoPOS,
-          date_prescribed: body.datePrescribed,
-          attending_optometrist: body.prescribedBy,
-          habitual_prescription: body.habitualPrescription,
-          chief_complaint: body.chiefComplaint,
-          diagnosis: body.diagnosis,
-          new_prescription: body.prescription,
-          next_visit_schedule: body.nextVisit || null,
-        },
+          patient_id: patientId,
+          diagnosis: diagnosis,
+          new_prescription: prescription,
+          pinhole_od: pinholeOD,
+          pinhole_os: pinholeOS,
+          mono_pd_od: monoPDO,
+          mono_pd_os: monoPOS,
+          date_prescribed: datePrescribed,
+          attending_optometrist: prescribedBy,
+          ai_analysis: ai_analysis // Ensure this column exists in tbl_checkup
+        }
       ])
       .select();
 
-    if (error) throw error;
-    return NextResponse.json({ success: true, data: data[0] }, { status: 201 });
+    if (error) {
+      console.error("Supabase Error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data[0]);
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Backend Crash:", error);
+    return NextResponse.json({ error: "Failed to save record" }, { status: 500 });
   }
 }
 
 export async function GET() {
   try {
+    // Fetching history from the correct table
     const { data, error } = await supabase
       .from('tbl_checkup')
-      .select(`
-        *,
-        tbl_patient (
-          patient_name
-        )
-      `)
-      .order('created_at', { ascending: false });
+      .select('*')
+      .order('date_prescribed', { ascending: false });
 
     if (error) throw error;
-    return NextResponse.json(data || [], { status: 200 });
+    return NextResponse.json(data);
   } catch (error) {
-    // If the table doesn't exist yet, return an empty array instead of crashing
-    return NextResponse.json([], { status: 200 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

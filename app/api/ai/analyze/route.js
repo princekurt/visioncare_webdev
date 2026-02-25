@@ -76,7 +76,7 @@ Always include a disclaimer: "This is AI-generated guidance for informational pu
     }
 
     return NextResponse.json({ summary: "No valid response from AI." });
-
+ 
   } catch (error) {
     console.error("System Crash:", error);
     return NextResponse.json({ summary: "The AI Pilot encountered a system error." }, { status: 500 });
