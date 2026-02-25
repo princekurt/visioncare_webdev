@@ -1,6 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image'; // Fixed: Added missing import
+import Image from 'next/image';
 
 export default function Login() {
   const router = useRouter();
@@ -16,7 +16,6 @@ export default function Login() {
           {/* Logo Branding */}
           <div className="text-center mb-10 group">
             <div className="flex justify-center mb-4">
-               {/* Fixed: Removed the CSS Eye border and allowed the image to breathe */}
                <div className="relative w-48 h-20">
                   <Image 
                     src="/images/eyeVision.png" 
@@ -39,7 +38,7 @@ export default function Login() {
           <div className="space-y-4">
             {/* Doctor Portal Button */}
             <button
-              onClick={() => router.push('/doctor/dashboard')}
+              onClick={() => router.push('/auth/doctor')}
               className="group relative flex items-center w-full p-5 bg-white border border-slate-200 rounded-2xl hover:border-[#F17343] hover:shadow-md transition-all duration-300 overflow-hidden text-left"
             >
               <div className="absolute right-0 top-0 w-24 h-24 bg-orange-50 rounded-full -mr-10 -mt-10 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -57,7 +56,7 @@ export default function Login() {
 
             {/* Patient Portal Button */}
             <button
-              onClick={() => router.push('/patient')}
+              onClick={() => router.push('/auth/patient')}
               className="group relative flex items-center w-full p-5 bg-white border border-slate-200 rounded-2xl hover:border-[#6D6E70] hover:shadow-md transition-all duration-300 overflow-hidden text-left"
             >
               <div className="absolute right-0 top-0 w-24 h-24 bg-slate-50 rounded-full -mr-10 -mt-10 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -74,7 +73,14 @@ export default function Login() {
             </button>
           </div>
 
-          <div className="mt-12 flex items-center justify-center gap-2 opacity-60">
+          {/* New: Quick link to Sign Up */}
+          <div className="mt-8 text-center">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+              New patient? <button onClick={() => router.push('/auth/signup')} className="text-[#F17343] hover:underline ml-1">Create an account here</button>
+            </p>
+          </div>
+
+          <div className="mt-10 flex items-center justify-center gap-2 opacity-60">
             <div className="h-[1px] w-8 bg-slate-200" />
             <p className="text-[11px] font-medium text-slate-400 italic">
               "What you see matters"
