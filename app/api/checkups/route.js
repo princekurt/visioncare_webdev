@@ -10,7 +10,6 @@ export async function POST(req) {
   try {
     const body = await req.json();
 
-    // Extracting all fields from the frontend payload
     const { 
       patientId, 
       diagnosis, 
@@ -21,10 +20,9 @@ export async function POST(req) {
       monoPOS, 
       datePrescribed, 
       prescribedBy,
-      ai_analysis // This is the JSON object from the AI Pilot
+      ai_analysis
     } = body;
 
-    // Save to the correct table: tbl_checkup
     const { data, error } = await supabase
       .from('tbl_checkup')
       .insert([
@@ -38,7 +36,7 @@ export async function POST(req) {
           mono_pd_os: monoPOS,
           date_prescribed: datePrescribed,
           attending_optometrist: prescribedBy,
-          ai_analysis: ai_analysis // Ensure this column exists in tbl_checkup
+          ai_analysis: ai_analysis
         }
       ])
       .select();
@@ -57,15 +55,29 @@ export async function POST(req) {
 
 export async function GET() {
   try {
-    // Fetching history from the correct table
     const { data, error } = await supabase
       .from('tbl_checkup')
-      .select('*')
+      .select(`
+        *,
+        tbl_patient (
+          id,
+          patient_name
+        )
+      `)
       .order('date_prescribed', { ascending: false });
 
     if (error) throw error;
-    return NextResponse.json(data);
+
+    // Flatten patient name so your UI can use visit.patient_name
+    const formatted = data.map(item => ({
+      ...item,
+      patient_name: item.tbl_patient?.patient_name || null
+    }));
+
+    return NextResponse.json(formatted);
+
   } catch (error) {
+    console.error("GET Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
