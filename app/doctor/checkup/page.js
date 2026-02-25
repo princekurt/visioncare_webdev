@@ -15,7 +15,7 @@ const initialFormState = {
   monoPOS: '',
   habitualPrescription: '',
   datePrescribed: new Date().toISOString().split('T')[0],
-  prescribedBy: 'Dr. Jane Smith',
+  prescribedBy: 'Dr. Jane Smith', // Default fallback
   chiefComplaint: '',
   diagnosis: '',
   prescription: '',
@@ -38,6 +38,20 @@ function CheckupContent() {
   const dropdownRef = useRef(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [form, setForm] = useState(initialFormState);
+
+  // --- SYNC ACTIVE DOCTOR FROM SETTINGS ---
+  useEffect(() => {
+    const syncDoctor = () => {
+      const savedDoctor = localStorage.getItem('activeDoctor');
+      if (savedDoctor) {
+        setForm(prev => ({ ...prev, prescribedBy: savedDoctor }));
+      }
+    };
+
+    syncDoctor(); // Run on mount
+    window.addEventListener('storage', syncDoctor); // Listen for changes in other tabs
+    return () => window.removeEventListener('storage', syncDoctor);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -155,7 +169,10 @@ function CheckupContent() {
       const hData = await hRes.json();
       setHistory(hData);
 
-      setForm(initialFormState);
+      // Keep the current doctor name even after clearing the form
+      const currentDoc = form.prescribedBy;
+      setForm({ ...initialFormState, prescribedBy: currentDoc });
+      
       setSearchTerm('');
       setRawAiData(null);
       setAiSuggestion("Select a patient to enable diagnostic suggestions.");
@@ -199,7 +216,6 @@ function CheckupContent() {
               </div>
             </div>
 
-            {/* Polished AI Display Section */}
             <div className="space-y-4">
               <h4 className="text-[10px] font-black text-[#F17343] uppercase tracking-widest border-b border-orange-100 pb-2 flex items-center gap-2">
                 <FaRobot /> AI PILOT INSIGHT
@@ -233,7 +249,8 @@ function CheckupContent() {
           </div>
 
           <div className="p-6 bg-slate-50 border-t border-slate-100 text-center text-[10px] font-bold text-slate-400 uppercase">
-            Attending Optometrist: {selectedVisit.attending_optometrist}
+            {/* FIXED: Using attending_optometrist to match your API/Supabase table */}
+            Attending Optometrist: <span className="text-[#6D6E70]">{selectedVisit.attending_optometrist || selectedVisit.prescribedBy || 'Unknown'}</span>
           </div>
         </div>
       </div>
@@ -360,7 +377,7 @@ function CheckupContent() {
               </div>
               <div className="col-span-2">
                 <label className={labelClass}>Signature Doctor</label>
-                <input value={form.prescribedBy || ''} readOnly className={`${inputClass} bg-slate-100 italic`} />
+                <input value={form.prescribedBy || ''} readOnly className={`${inputClass} bg-slate-100 italic font-bold text-[#F17343]`} />
               </div>
             </div>
           </div>
@@ -426,7 +443,8 @@ function CheckupContent() {
               <button 
                 type="button"
                 onClick={() => {
-                  setForm(initialFormState);
+                  const currentDoc = form.prescribedBy;
+                  setForm({ ...initialFormState, prescribedBy: currentDoc });
                   setSearchTerm('');
                   setRawAiData(null);
                   setAiSuggestion("Select a patient to enable diagnostic suggestions.");
@@ -438,7 +456,6 @@ function CheckupContent() {
             </div>
           </div>
 
-          {/* AI PILOT BOX */}
           <div className="bg-orange-50 border-2 border-dashed border-orange-200 rounded-[2rem] p-6 min-h-[180px] flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">

@@ -9,22 +9,26 @@ export default function Header({ title, doctor, patient }) {
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Show doctor info */}
         {doctor && (
-          <div className="flex items-center gap-3 border-l pl-4 border-slate-100">
+          <div className="flex items-center gap-3 border-l pl-4 border-slate-100 transition-all duration-500">
             <div className="text-right">
-              <p className="font-bold text-[#6D6E70] leading-none">{doctor.name}</p>
-              <p className="text-xs text-[#F17343] font-semibold mt-1 uppercase tracking-wider">
-                {doctor.specialty}
+              {/* Doctor Name now updates dynamically */}
+              <p className="font-bold text-[#6D6E70] leading-none transition-colors duration-300">
+                {doctor.name}
               </p>
+              <div className="flex items-center justify-end gap-1.5 mt-1">
+                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                 <p className="text-[10px] text-[#F17343] font-bold uppercase tracking-widest">
+                   {doctor.specialty}
+                 </p>
+              </div>
             </div>
-            <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-[#6D6E70] border border-slate-200 font-bold">
-              {doctor.name.charAt(0)}
+            <div className="w-10 h-10 bg-slate-50 text-[#F17343] rounded-xl flex items-center justify-center border border-slate-100 font-black shadow-inner">
+              {doctor.name.charAt(doctor.name.startsWith('Dr.') ? 4 : 0)}
             </div>
           </div>
         )}
 
-        {/* Show patient info */}
         {patient && (
           <div className="flex items-center gap-3 border-l pl-4 border-slate-100">
             <div className="text-right">
