@@ -6,6 +6,15 @@ import { useRouter } from 'next/navigation';
 import { FaPrescriptionBottleAlt, FaEye, FaCalendarAlt, FaUserMd, FaInfoCircle, FaGlasses } from 'react-icons/fa';
 import PatientLayoutWrapper from '../../../components/layout/PatientLayoutWrapper';
 
+// 1. DYNAMIC NOTICE LIBRARY
+const DIAGNOSIS_NOTICES = {
+  "Myopia": "Your prescription is for distance. Avoid squinting when looking at far objects, as this can cause muscle fatigue around the eyes.",
+  "Hyperopia": "These lenses help your eyes focus on close-up tasks. Use them while reading or using your phone to prevent frontal headaches.",
+  "Astigmatism": "Your eyes have a slight irregular curve. These lenses correct light distortion; wearing them consistently will help reduce 'starbursts' around lights at night.",
+  "Normal": "Your vision is healthy! To keep it that way, ensure you have proper lighting when reading and keep screens at arm's length.",
+  "Default": "To keep your eyes healthy: Take a break from your screen every 20 minutes by looking at something far away, keep your monitor at eye level, and don't forget to blink often to prevent dryness."
+};
+
 export default function PrescriptionPage() {
   const [prescriptions, setPrescriptions] = useState([]);
   const [patientInfo, setPatientInfo] = useState(null);
@@ -16,6 +25,14 @@ export default function PrescriptionPage() {
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
+
+  // 2. HELPER: CALCULATE NEXT EXAM DATE (6 Months later)
+  const getNextExamDate = (dateString) => {
+    if (!dateString) return "Schedule Soon";
+    const date = new Date(dateString);
+    date.setMonth(date.getMonth() + 6);
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  };
 
   useEffect(() => {
     async function fetchPrescriptions() {
@@ -52,12 +69,14 @@ export default function PrescriptionPage() {
   if (loading) return <div className="p-20 text-center font-black text-slate-400 uppercase tracking-widest">Retrieving Prescriptions...</div>;
 
   const latest = prescriptions[0];
+  // Determine notice based on diagnosis
+  const dynamicNotice = latest ? (DIAGNOSIS_NOTICES[latest.diagnosis] || DIAGNOSIS_NOTICES["Default"]) : "";
 
   return (
     <PatientLayoutWrapper pageTitle="Prescription" patientData={patientInfo}>
       <div className="space-y-8 text-[#6D6E70]">
         
-        {/* Header Section */}
+        {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-[#6D6E70] rounded-2xl flex items-center justify-center text-white shadow-xl">
@@ -65,7 +84,7 @@ export default function PrescriptionPage() {
             </div>
             <div>
               <h2 className="text-2xl font-black uppercase tracking-tight">Lens <span className="text-[#F17343]">Prescription</span></h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Your current corrective lens specifications</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Specifications as of {latest?.date_prescribed}</p>
             </div>
           </div>
         </div>
@@ -73,80 +92,75 @@ export default function PrescriptionPage() {
         {latest ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* Main Prescription Card */}
             <div className="lg:col-span-2 space-y-6">
+              {/* Prescription Details Card */}
               <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
                 <div className="bg-slate-50 px-8 py-5 border-b border-slate-100 flex justify-between items-center">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Specification</span>
-                  <span className="bg-green-100 text-green-600 px-3 py-1 rounded-full text-[9px] font-black uppercase">Current</span>
+                  <span className="bg-green-100 text-green-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter">Current Record</span>
                 </div>
                 
                 <div className="p-10">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    {/* Right Eye (OD) */}
                     <div className="space-y-4">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-8 bg-[#F17343] rounded-full"></div>
                         <h3 className="font-black text-xl uppercase tracking-tighter text-[#6D6E70]">Right Eye <span className="text-slate-300 ml-2">(OD)</span></h3>
                       </div>
-                      <div className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100 relative overflow-hidden">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Visual Acuity / Pinhole</p>
+                      <div className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100 relative">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Visual Acuity</p>
                         <p className="text-4xl font-black text-[#6D6E70] tracking-tighter">{latest.pinhole_od || 'N/A'}</p>
-                        <div className="absolute right-4 bottom-4 opacity-5 text-[8px] font-black uppercase tracking-widest vertical-text">Oculus Dexter</div>
                       </div>
                     </div>
 
-                    {/* Left Eye (OS) */}
                     <div className="space-y-4">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-8 bg-slate-400 rounded-full"></div>
                         <h3 className="font-black text-xl uppercase tracking-tighter text-[#6D6E70]">Left Eye <span className="text-slate-300 ml-2">(OS)</span></h3>
                       </div>
-                      <div className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100 relative overflow-hidden">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Visual Acuity / Pinhole</p>
+                      <div className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100 relative">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Visual Acuity</p>
                         <p className="text-4xl font-black text-[#6D6E70] tracking-tighter">{latest.pinhole_os || 'N/A'}</p>
-                        <div className="absolute right-4 bottom-4 opacity-5 text-[8px] font-black uppercase tracking-widest vertical-text">Oculus Sinister</div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-10 pt-10 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="mt-10 pt-10 border-t border-slate-100 flex flex-wrap gap-8">
                     <div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Primary Diagnosis</p>
-                      <p className="text-sm font-bold text-[#F17343] uppercase bg-orange-50 px-4 py-2 rounded-xl inline-block">
-                        {latest.diagnosis || "General Refraction"}
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Diagnosis</p>
+                      <p className="text-sm font-bold text-[#F17343] uppercase bg-orange-50 px-4 py-2 rounded-xl inline-block border border-orange-100">
+                        {latest.diagnosis}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Prescribing Doctor</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Certified By</p>
                       <div className="flex items-center gap-2">
                         <FaUserMd className="text-slate-300" />
-                        <p className="text-sm font-black text-[#6D6E70] uppercase tracking-tight">Dr. {latest.attending_optometrist}</p>
+                        <p className="text-sm font-black text-[#6D6E70] uppercase">Dr. {latest.attending_optometrist}</p>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Notice Card */}
+              {/* DYNAMIC NOTICE CARD */}
               <div className="bg-blue-50 border border-blue-100 p-6 rounded-[2rem] flex gap-4">
-                <FaInfoCircle className="text-blue-400 mt-1" size={20} />
+                <FaInfoCircle className="text-blue-400 mt-1 flex-shrink-0" size={20} />
                 <div>
-                  <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Patient Notice</p>
-                  <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                    This prescription is valid based on your exam date: <strong>{latest.date_prescribed}</strong>. Avoid using lenses with older specifications as it may cause strain or headaches.
+                  <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Clinical Note for {latest.diagnosis}</p>
+                  <p className="text-xs text-slate-600 font-medium leading-relaxed italic">
+                    "{dynamicNotice}"
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Sidebar: History & Reminders */}
+            {/* Sidebar */}
             <div className="space-y-6">
               <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">Previous Records</h4>
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">Timeline History</h4>
                 <div className="space-y-4">
                   {prescriptions.slice(1, 4).map((prev, idx) => (
-                    /* FIXED: Using checkup_id as key */
                     <div 
                       key={prev.checkup_id || `prev-${idx}`} 
                       className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors cursor-pointer group" 
@@ -154,24 +168,24 @@ export default function PrescriptionPage() {
                     >
                       <div>
                         <p className="text-[10px] font-black text-[#6D6E70] uppercase">{prev.date_prescribed}</p>
-                        <p className="text-[9px] text-slate-400 font-bold uppercase">{prev.diagnosis}</p>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase truncate w-32">{prev.diagnosis}</p>
                       </div>
                       <FaEye className="text-slate-200 group-hover:text-[#F17343] transition-colors" />
                     </div>
                   ))}
-                  {prescriptions.length <= 1 && (
-                    <p className="text-[10px] text-slate-300 font-black uppercase text-center py-4 tracking-widest">No earlier records</p>
-                  )}
                 </div>
               </div>
 
+              {/* DYNAMIC NEXT EXAM CARD */}
               <div className="bg-[#6D6E70] p-8 rounded-[2.5rem] text-white shadow-lg relative overflow-hidden">
                 <FaCalendarAlt className="absolute -right-4 -bottom-4 text-white/5 text-7xl" />
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 mb-2">Next Recommended Exam</p>
-                <p className="text-lg font-black uppercase tracking-tight mb-4">6 Months Periodic</p>
-                <button className="w-full py-3 bg-[#F17343] hover:bg-[#d9653a] transition-colors rounded-xl text-[10px] font-black uppercase tracking-widest">
-                  Set Reminder
-                </button>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 mb-2">Target Follow-up</p>
+                <p className="text-lg font-black uppercase tracking-tight mb-4">
+                  {getNextExamDate(latest.date_prescribed)}
+                </p>
+                <div className="w-full py-3 bg-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-center">
+                  Routine 6-Month Cycle
+                </div>
               </div>
             </div>
           </div>
