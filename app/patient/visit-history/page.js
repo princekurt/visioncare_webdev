@@ -10,7 +10,7 @@ export default function VisitHistory() {
   const [visits, setVisits] = useState([]);
   const [patientInfo, setPatientInfo] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedVisit, setSelectedVisit] = useState(null); // The Modal State
+  const [selectedVisit, setSelectedVisit] = useState(null); 
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDate, setFilterDate] = useState('');
@@ -60,7 +60,7 @@ export default function VisitHistory() {
     return matchesSearch && matchesDate;
   });
 
-  // THE MODAL (The "My Records" content inside Visit History)
+  // THE MODAL 
   const DetailsModal = () => {
     if (!selectedVisit) return null;
     return (
@@ -71,7 +71,9 @@ export default function VisitHistory() {
               <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Full Consultation Report</p>
               <h3 className="text-xl font-black uppercase">{selectedVisit.date_prescribed}</h3>
             </div>
-            <button onClick={() => setSelectedVisit(null)} className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full hover:bg-white/20 transition-all"><FaTimes /></button>
+            <button onClick={() => setSelectedVisit(null)} className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full hover:bg-white/20 transition-all">
+              <FaTimes />
+            </button>
           </div>
 
           <div className="p-8 overflow-y-auto space-y-8">
@@ -92,12 +94,16 @@ export default function VisitHistory() {
                 </div>
                 <div>
                   <h4 className="text-[10px] font-black text-[#6D6E70] uppercase tracking-widest border-b border-slate-100 pb-2 mb-4">Doctor's Diagnosis</h4>
-                  <p className="text-sm text-slate-600 leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">"{selectedVisit.diagnosis || 'Standard Checkup'}"</p>
+                  <p className="text-sm text-slate-600 leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    "{selectedVisit.diagnosis || 'Standard Checkup'}"
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-widest border-b border-blue-100 pb-2 flex items-center gap-2"><FaRobot /> AI Intelligence</h4>
+                <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-widest border-b border-blue-100 pb-2 flex items-center gap-2">
+                  <FaRobot /> AI Intelligence
+                </h4>
                 {selectedVisit.ai_analysis ? (
                   <div className="space-y-3">
                     <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
@@ -120,7 +126,9 @@ export default function VisitHistory() {
           </div>
           <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center gap-2">
             <FaUserMd className="text-slate-400" />
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Optometrist: <span className="text-[#6D6E70]">{selectedVisit.attending_optometrist}</span></p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Optometrist: <span className="text-[#6D6E70]">{selectedVisit.attending_optometrist}</span>
+            </p>
           </div>
         </div>
       </div>
@@ -147,19 +155,31 @@ export default function VisitHistory() {
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative">
               <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-xs" />
-              <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 pr-4 py-3 bg-white border border-slate-100 rounded-xl text-[10px] font-bold uppercase outline-none focus:border-[#F17343] w-56 shadow-sm transition-all" />
+              <input 
+                type="text" 
+                placeholder="Search..." 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+                className="pl-10 pr-4 py-3 bg-white border border-slate-100 rounded-xl text-[10px] font-bold uppercase outline-none focus:border-[#F17343] w-56 shadow-sm transition-all" 
+              />
             </div>
             <div className="flex items-center gap-2 bg-white border border-slate-100 rounded-xl px-4 py-3 shadow-sm">
               <FaCalendarAlt className="text-[#F17343] text-xs" />
-              <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="text-[10px] font-bold uppercase outline-none text-[#6D6E70]" />
+              <input 
+                type="date" 
+                value={filterDate} 
+                onChange={(e) => setFilterDate(e.target.value)} 
+                className="text-[10px] font-bold uppercase outline-none text-[#6D6E70]" 
+              />
             </div>
           </div>
         </div>
 
         <div className="space-y-4">
           {filteredVisits.length > 0 ? (
-            filteredVisits.map((visit) => (
-              <div key={visit.id} className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm hover:border-orange-200 transition-all flex flex-col md:flex-row md:items-center justify-between gap-6">
+            filteredVisits.map((visit, index) => (
+              /* FIXED: Added correct checkup_id as the key with a fallback index */
+              <div key={visit.checkup_id || `visit-${index}`} className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm hover:border-orange-200 transition-all flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="min-w-[120px]">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Date</p>
                   <p className="text-sm font-black text-[#6D6E70] uppercase">{visit.date_prescribed}</p>
@@ -172,13 +192,18 @@ export default function VisitHistory() {
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Optometrist</p>
                   <p className="text-[11px] font-black text-[#6D6E70] uppercase">{visit.attending_optometrist}</p>
                 </div>
-                <button onClick={() => setSelectedVisit(visit)} className="flex items-center gap-2 px-6 py-3 bg-slate-50 text-slate-400 hover:bg-[#6D6E70] hover:text-white rounded-2xl transition-all text-[10px] font-black uppercase tracking-widest shadow-sm group">
+                <button 
+                  onClick={() => setSelectedVisit(visit)} 
+                  className="flex items-center gap-2 px-6 py-3 bg-slate-50 text-slate-400 hover:bg-[#6D6E70] hover:text-white rounded-2xl transition-all text-[10px] font-black uppercase tracking-widest shadow-sm group"
+                >
                   <FaEye className="group-hover:scale-110 transition-transform" /> View Report
                 </button>
               </div>
             ))
           ) : (
-            <div className="py-20 text-center bg-white rounded-[3rem] border border-dashed border-slate-200 text-slate-300 font-black text-[10px] uppercase tracking-[0.3em]">No visits found</div>
+            <div className="py-20 text-center bg-white rounded-[3rem] border border-dashed border-slate-200 text-slate-300 font-black text-[10px] uppercase tracking-[0.3em]">
+              No visits found
+            </div>
           )}
         </div>
       </div>
