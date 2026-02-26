@@ -62,7 +62,7 @@ export default function PatientDashboard() {
     }
 
     getPatientData();
-  }, [router]); // Removed supabase from dependency to prevent unnecessary re-runs
+  }, [router]);
 
   if (loading) {
     return (
@@ -106,9 +106,10 @@ export default function PatientDashboard() {
         {/* Records List */}
         <div className="grid gap-4">
           {records.length > 0 ? (
-            records.map((record) => (
+            /* FIXED: Added 'index' and a fallback key to prevent React warnings */
+            records.map((record, index) => (
               <div 
-                key={record.id} 
+                key={record.id || `record-${index}`} 
                 className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all group flex flex-col md:flex-row md:items-center justify-between gap-4"
               >
                 <div className="flex items-center gap-5">
@@ -121,7 +122,7 @@ export default function PatientDashboard() {
                     </p>
                     <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
                       <FaCalendarAlt className="text-[#F17343]" />
-                      {new Date(record.date_prescribed).toLocaleDateString()}
+                      {record.date_prescribed ? new Date(record.date_prescribed).toLocaleDateString() : 'N/A'}
                     </div>
                   </div>
                 </div>
