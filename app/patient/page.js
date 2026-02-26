@@ -12,7 +12,7 @@ export default function PatientDashboard() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Initialize Supabase
+  // Standard Supabase initialization
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -21,30 +21,30 @@ export default function PatientDashboard() {
   useEffect(() => {
     async function getPatientData() {
       try {
-        // 1. Get the current logged-in user
-        const { data: { user } } = await supabase.auth.getUser();
+        // 1. Check for authenticated user session
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-        if (!user) {
-          router.push('/'); // Send back to login if not authenticated
+        if (authError || !user) {
+          router.push('/');
           return;
         }
 
-        // 2. Get the patient profile linked to this user_id
+        // 2. Search by email (matching what the doctor registered)
         const { data: patient, error: pError } = await supabase
           .from('tbl_patient')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('patient_email', user.email)
           .single();
 
         if (pError || !patient) {
-          console.log("No profile linked to this account yet.");
+          console.log("No clinical profile linked to this email.");
           setLoading(false);
           return;
         }
 
         setPatientInfo(patient);
 
-        // 3. Get all checkups for this specific patient
+        // 3. Get clinical history for this specific patient ID
         const { data: checkups, error: cError } = await supabase
           .from('tbl_checkup')
           .select('*')
@@ -62,14 +62,14 @@ export default function PatientDashboard() {
     }
 
     getPatientData();
-  }, [router, supabase]);
+  }, [router]); // Removed supabase from dependency to prevent unnecessary re-runs
 
   if (loading) {
     return (
       <PatientLayoutWrapper pageTitle="Loading...">
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-pulse text-slate-400 font-black uppercase tracking-widest">
-            Fetching your records...
+          <div className="animate-pulse text-slate-400 font-black uppercase tracking-widest text-xs">
+            Fetching vision records...
           </div>
         </div>
       </PatientLayoutWrapper>
@@ -77,8 +77,8 @@ export default function PatientDashboard() {
   }
 
   return (
-    <PatientLayoutWrapper pageTitle="Dashboard">
-      <div className="flex flex-col gap-6">
+    <PatientLayoutWrapper pageTitle="Dashboard" patientData={patientInfo}>
+      <div className="flex flex-col gap-6 text-[#6D6E70]">
         
         {/* Welcome Section */}
         <div className="bg-[#6D6E70] p-8 rounded-[2rem] text-white shadow-xl relative overflow-hidden">
@@ -86,8 +86,8 @@ export default function PatientDashboard() {
             <h2 className="text-2xl font-black uppercase tracking-tight">
               Welcome back, <span className="text-[#F17343]">{patientInfo?.patient_name || 'Patient'}</span>
             </h2>
-            <p className="text-white/60 text-xs font-bold uppercase tracking-widest mt-2">
-              Clinic ID: #00{patientInfo?.id}
+            <p className="text-white/60 text-[10px] font-black uppercase tracking-widest mt-2">
+              Clinic ID: #P-00{patientInfo?.id}
             </p>
           </div>
           <FaEye className="absolute -right-8 -bottom-8 text-white/5 text-[12rem]" />
@@ -117,11 +117,11 @@ export default function PatientDashboard() {
                   </div>
                   <div>
                     <p className="font-black text-[#6D6E70] uppercase text-sm tracking-tight group-hover:text-[#F17343] transition-colors">
-                      {record.diagnosis || "Optical Examination"}
+                      {record.diagnosis || "General Checkup"}
                     </p>
                     <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
                       <FaCalendarAlt className="text-[#F17343]" />
-                      {record.date_prescribed}
+                      {new Date(record.date_prescribed).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
@@ -133,8 +133,8 @@ export default function PatientDashboard() {
             ))
           ) : (
             <div className="bg-white p-20 rounded-[3rem] text-center border-2 border-dashed border-slate-100">
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                No medical records found.
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                No medical records found for this account.
               </p>
             </div>
           )}
