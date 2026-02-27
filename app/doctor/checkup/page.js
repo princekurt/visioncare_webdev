@@ -169,7 +169,6 @@ function CheckupContent() {
       const hData = await hRes.json();
       setHistory(hData);
 
-      // Keep the current doctor name even after clearing the form
       const currentDoc = form.prescribedBy;
       setForm({ ...initialFormState, prescribedBy: currentDoc });
       
@@ -236,6 +235,16 @@ function CheckupContent() {
                       {selectedVisit.ai_analysis.trends}
                     </p>
                   </div>
+
+                  {/* --- PATIENT EDUCATION SECTION --- */}
+                  <div className="bg-emerald-50/70 p-4 rounded-2xl border border-emerald-100 shadow-sm">
+                    <p className="text-[9px] font-black text-emerald-600 uppercase mb-1 flex items-center gap-1">
+                      <span>📘</span> Patient Education
+                    </p>
+                    <p className="text-[11px] text-slate-700 leading-relaxed font-medium italic">
+                      {selectedVisit.ai_analysis.educational_notes || "Understand your vision health better with these AI insights."}
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <div className="bg-slate-50 p-10 rounded-2xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
@@ -249,7 +258,6 @@ function CheckupContent() {
           </div>
 
           <div className="p-6 bg-slate-50 border-t border-slate-100 text-center text-[10px] font-bold text-slate-400 uppercase">
-            {/* FIXED: Using attending_optometrist to match your API/Supabase table */}
             Attending Optometrist: <span className="text-[#6D6E70]">{selectedVisit.attending_optometrist || selectedVisit.prescribedBy || 'Unknown'}</span>
           </div>
         </div>
