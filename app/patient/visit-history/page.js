@@ -1,10 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
-import { FaHistory, FaSearch, FaCalendarAlt, FaUserMd, FaEye, FaRobot, FaTimes, FaInfoCircle } from 'react-icons/fa';
+import { FaHistory, FaSearch, FaCalendarAlt, FaUserMd, FaEye, FaRobot, FaTimes, FaInfoCircle, FaBookOpen } from 'react-icons/fa';
 import PatientLayoutWrapper from '../../../components/layout/PatientLayoutWrapper';
+
+// MOVE THIS OUTSIDE the component so it stays constant between renders
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 export default function VisitHistory() {
   const [visits, setVisits] = useState([]);
@@ -16,10 +22,6 @@ export default function VisitHistory() {
   const [filterDate, setFilterDate] = useState('');
   
   const router = useRouter();
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
 
   useEffect(() => {
     async function fetchHistory() {
@@ -51,16 +53,16 @@ export default function VisitHistory() {
       }
     }
     fetchHistory();
+    // Removed supabase from here because it's now defined outside and constant
   }, [router]);
 
   const filteredVisits = visits.filter(v => {
     const matchesSearch = v.diagnosis?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         v.attending_optometrist?.toLowerCase().includes(searchTerm.toLowerCase());
+                          v.attending_optometrist?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDate = filterDate ? v.date_prescribed === filterDate : true;
     return matchesSearch && matchesDate;
   });
 
-  // THE MODAL 
   const DetailsModal = () => {
     if (!selectedVisit) return null;
     return (
@@ -110,9 +112,19 @@ export default function VisitHistory() {
                       <p className="text-[9px] font-black text-blue-500 uppercase mb-1">Expert Summary</p>
                       <p className="text-[11px] text-slate-700 leading-relaxed font-medium">{selectedVisit.ai_analysis.summary}</p>
                     </div>
+
                     <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100">
                       <p className="text-[9px] font-black text-[#F17343] uppercase mb-1">Health Trends</p>
                       <p className="text-[11px] text-slate-700 leading-relaxed font-medium">{selectedVisit.ai_analysis.trends}</p>
+                    </div>
+
+                    <div className="bg-emerald-50/70 p-4 rounded-2xl border border-emerald-100 shadow-sm">
+                      <p className="text-[9px] font-black text-emerald-600 uppercase mb-1 flex items-center gap-2">
+                        <FaBookOpen size={10} /> Patient Education
+                      </p>
+                      <p className="text-[11px] text-slate-700 leading-relaxed font-medium italic">
+                        {selectedVisit.ai_analysis.educational_notes || "Your optometrist will provide specific educational notes during your next visit."}
+                      </p>
                     </div>
                   </div>
                 ) : (
@@ -140,7 +152,6 @@ export default function VisitHistory() {
   return (
     <PatientLayoutWrapper pageTitle="Visit History" patientData={patientInfo}>
       <div className="space-y-8 text-[#6D6E70]">
-        
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-[#F17343] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-200">
@@ -178,7 +189,6 @@ export default function VisitHistory() {
         <div className="space-y-4">
           {filteredVisits.length > 0 ? (
             filteredVisits.map((visit, index) => (
-              /* FIXED: Added correct checkup_id as the key with a fallback index */
               <div key={visit.checkup_id || `visit-${index}`} className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm hover:border-orange-200 transition-all flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="min-w-[120px]">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Date</p>
