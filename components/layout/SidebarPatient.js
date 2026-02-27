@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
+import { createClient } from '@supabase/supabase-js';
 import { 
   FaHome, 
   FaRobot, 
@@ -16,7 +17,12 @@ export default function SidebarPatient() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // REMOVED 'My Records' to avoid redundancy with 'Visit History'
+  // Initialize Supabase Client
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL, 
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+
   const menuItems = [
     { name: 'Dashboard', href: '/patient', icon: <FaHome /> },
     { name: 'Visit History', href: '/patient/visit-history', icon: <FaHistory /> },
@@ -24,6 +30,22 @@ export default function SidebarPatient() {
     { name: 'Prescription', href: '/patient/prescription', icon: <FaPrescriptionBottleAlt /> },
     { name: 'Profile', href: '/patient/profile', icon: <FaUser /> },
   ];
+
+  // Actual Logout Logic
+  const handleLogout = async () => {
+    const confirmLogout = confirm("Are you sure you want to logout?");
+    if (confirmLogout) {
+      try {
+        await supabase.auth.signOut();
+        // Redirect to landing page or login
+        router.push('/'); 
+      } catch (error) {
+        console.error('Error logging out:', error.message);
+        // Fallback redirect even if signOut fails
+        router.push('/');
+      }
+    }
+  };
 
   return (
     <div className="w-72 bg-[#6D6E70] text-white min-h-screen flex flex-col border-r border-slate-200">
@@ -33,7 +55,10 @@ export default function SidebarPatient() {
         <div className="relative group">
           <div className="absolute -inset-1 bg-gradient-to-r from-[#F17343] to-[#924a2e] rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
           
-          <div className="relative bg-white p-1 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] flex justify-center transition-transform duration-300 hover:-translate-y-1 cursor-pointer" onClick={() => router.push('/patient')}>
+          <div 
+            className="relative bg-white p-1 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] flex justify-center transition-transform duration-300 hover:-translate-y-1 cursor-pointer" 
+            onClick={() => router.push('/patient')}
+          >
              <Image 
               src="/images/eyeVision.png" 
               alt="EyeVision Logo" 
@@ -71,10 +96,10 @@ export default function SidebarPatient() {
       {/* Logout Button */}
       <div className="p-6 border-t border-white/10">
         <button
-          onClick={() => router.push('/')}
+          onClick={handleLogout}
           className="flex items-center gap-3 p-4 rounded-xl bg-white/5 hover:bg-red-500/20 hover:text-red-300 transition-all w-full font-bold text-slate-300 text-[10px] uppercase tracking-widest group"
         >
-          <FaSignOutAlt className="group-hover:translate-x-1 transition-transform" />
+          <FaSignOutAlt className="group-hover:translate-x-1 transition-transform text-[#F17343] group-hover:text-red-400" />
           Logout
         </button>
       </div>
