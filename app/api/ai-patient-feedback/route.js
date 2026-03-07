@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 
 export async function POST(req) {
-  // Define outside try block so catch can access it
   let pName = "Patient"; 
 
   try {
@@ -9,7 +8,6 @@ export async function POST(req) {
     pName = patientName || "Patient";
     const apiKey = process.env.GEMINI_API_KEY; 
     
-    // Using your specific Gemini 2.5 Flash URL
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     if (!history || history.length === 0) {

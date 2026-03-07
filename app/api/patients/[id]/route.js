@@ -2,7 +2,7 @@ import { supabase } from '../../../../lib/supabase';
 
 // GET SINGLE PATIENT
 export async function GET(req, { params }) {
-  // Fix: Await params to avoid NaN error
+ 
   const resolvedParams = await params;
   const id = parseInt(resolvedParams.id);
 
@@ -24,7 +24,7 @@ export async function GET(req, { params }) {
 
 // UPDATE PATIENT
 export async function PUT(req, { params }) {
-  // Fix: Await params to avoid NaN error
+  
   const resolvedParams = await params;
   const id = parseInt(resolvedParams.id);
   const body = await req.json();

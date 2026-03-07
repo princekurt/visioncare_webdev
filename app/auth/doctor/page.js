@@ -40,7 +40,7 @@ export default function DoctorLogin() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F8F9FA] selection:bg-orange-100 font-sans relative overflow-hidden">
-      {/* Background Decorative Element - Same as Patient but slightly different vibe */}
+      {/* Background  */}
       <div className="absolute top-0 left-0 w-full h-1.5 bg-[#6D6E70]" /> 
       <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-slate-100 rounded-full opacity-50 blur-3xl" />
       

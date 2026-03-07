@@ -40,7 +40,7 @@ export default function Dashboard() {
     fetchStats();
   }, []);
 
-  // Stats array reduced to 3 items
+  // Stats array 
   const stats = [
     { title: "Total Patients", value: counts.totalPatients, icon: <FaUserInjured />, color: "text-[#6D6E70]", bg: "bg-slate-50" },
     { title: "Checkups Today", value: counts.checkupsToday, icon: <FaClipboardCheck />, color: "text-[#F17343]", bg: "bg-orange-50" },
@@ -65,7 +65,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Updated Stats Grid: Changed to md:grid-cols-3 for balance */}
+        {/*  Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {stats.map((stat, index) => (
             <div 

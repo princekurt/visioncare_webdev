@@ -26,10 +26,10 @@ export default function Settings() {
   const handleChange = (e) => setProfile({ ...profile, [e.target.name]: e.target.value });
 
   const handleSave = () => {
-    // 1. Save to localStorage
+   
     localStorage.setItem('activeDoctor', profile.name);
     
-    // 2. IMPORTANT: Notify the rest of the app that the doctor changed
+    
     window.dispatchEvent(new Event('storage'));
     
     alert(`Practitioner updated to: ${profile.name}`);

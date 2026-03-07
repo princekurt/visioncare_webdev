@@ -20,14 +20,14 @@ export async function POST(req) {
     // Create dataset hash
     const datasetHash = validData.join("|");
 
-    // ✅ 1. CACHE CHECK
+    //  CACHE CHECK
     if (cachedHash === datasetHash && cachedInsight) {
       return NextResponse.json({
         insight: cachedInsight
       });
     }
 
-    // ✅ 2. TRY GEMINI FIRST
+    // TRY GEMINI FIRST
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     const prompt = `
@@ -72,7 +72,7 @@ Keep it professional and neutral.
       console.warn("Gemini failed. Using local AI fallback.");
     }
 
-    // ✅ 3. LOCAL FALLBACK AI (ALWAYS WORKS)
+    //  LOCAL FALLBACK AI (ALWAYS WORKS)
 
     const counts = {};
     validData.forEach(d => {

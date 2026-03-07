@@ -12,7 +12,7 @@ export async function POST(req) {
       );
     }
 
-    // Using your current working model URL
+   
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     const promptText = `
@@ -44,7 +44,7 @@ JSON FORMAT:
         },
       ],
       generationConfig: {
-        temperature: 0.2, // Keeps it professional and focused
+        temperature: 0.2, 
       },
     };
 

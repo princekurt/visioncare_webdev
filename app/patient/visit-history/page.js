@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { FaHistory, FaSearch, FaCalendarAlt, FaUserMd, FaEye, FaRobot, FaTimes, FaInfoCircle, FaBookOpen } from 'react-icons/fa';
 import PatientLayoutWrapper from '../../../components/layout/PatientLayoutWrapper';
 
-// MOVE THIS OUTSIDE the component so it stays constant between renders
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -53,7 +53,7 @@ export default function VisitHistory() {
       }
     }
     fetchHistory();
-    // Removed supabase from here because it's now defined outside and constant
+  
   }, [router]);
 
   const filteredVisits = visits.filter(v => {

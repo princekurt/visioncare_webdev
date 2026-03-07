@@ -6,10 +6,10 @@ import { createClient } from '@supabase/supabase-js';
 import { FaEnvelope, FaLock, FaArrowLeft, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function AuthPage() {
-  const { role } = useParams(); // Gets 'doctor' or 'patient' from the URL
+  const { role } = useParams(); 
   const router = useRouter();
   
-  // Initialize Supabase using your env variables
+ 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -33,8 +33,7 @@ export default function AuthPage() {
       alert(error.message);
       setLoading(false);
     } else {
-      // Success! Redirect based on the role in the path
-      // Note: Make sure your folders are named 'doctor' and 'patient'
+  
       router.push(`/${role}/dashboard`);
     }
   };

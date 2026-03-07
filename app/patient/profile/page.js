@@ -72,7 +72,7 @@ export default function Profile() {
 
   const handleFinalLogout = async () => {
     await supabase.auth.signOut();
-    router.push('/'); // Redirecting to your root (app/page.js)
+    router.push('/'); // Redirecting to root (app/page.js)
   };
 
   if (loading) return <div className="p-20 text-center font-black text-slate-400 uppercase tracking-widest">Loading Record...</div>;

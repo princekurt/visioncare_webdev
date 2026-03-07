@@ -32,7 +32,7 @@ export default function PatientSignUp() {
     }
 
     if (authData.user) {
-      // THE AUTO-LINK: Matches the login email with your database column
+      // THE AUTO-LINK: Matches the login email with database column
       const { error: linkError } = await supabase
         .from('tbl_patient')
         .update({ user_id: authData.user.id })

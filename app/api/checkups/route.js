@@ -20,7 +20,7 @@ export async function POST(req) {
       monoPOS, 
       datePrescribed, 
       prescribedBy,
-      ai_analysis // This is the JSON object from the AI
+      ai_analysis 
     } = body;
 
     // 1. Prepare the record for insertion
@@ -34,7 +34,6 @@ export async function POST(req) {
       mono_pd_os: monoPOS,
       date_prescribed: datePrescribed,
       attending_optometrist: prescribedBy,
-      // We store the whole AI object (summary, trends, options, etc.)
       ai_analysis: ai_analysis 
     };
 
@@ -72,7 +71,7 @@ export async function GET() {
 
     if (error) throw error;
 
-    // Flatten patient name so your UI can use visit.patient_name directly
+    // Flatten patient name so UI can use visit.patient_name directly
     const formattedData = data.map(item => ({
       ...item,
       patient_name: item.tbl_patient?.patient_name || "Unknown Patient"

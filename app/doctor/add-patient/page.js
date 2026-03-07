@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import DoctorLayoutWrapper from '../../../components/layout/DoctorLayoutWrapper';
 import { FaUserPlus, FaCheckCircle, FaEdit } from 'react-icons/fa';
 
-// This internal component handles the searchParams safely
+// T handles the searchParams safely
 function AddPatientContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
