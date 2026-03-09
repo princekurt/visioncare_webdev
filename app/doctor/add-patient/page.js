@@ -3,9 +3,8 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import DoctorLayoutWrapper from '../../../components/layout/DoctorLayoutWrapper';
-import { FaUserPlus, FaCheckCircle, FaEdit } from 'react-icons/fa';
+import { FaUserPlus, FaCheckCircle, FaEdit, FaExclamationCircle } from 'react-icons/fa';
 
-// T handles the searchParams safely
 function AddPatientContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -24,6 +23,7 @@ function AddPatientContent() {
 
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     if (editMode && patientId && patientId !== 'null') {
@@ -52,11 +52,14 @@ function AddPatientContent() {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    if (errorMsg) setErrorMsg(''); // Clear error when user types
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
 
     try {
       const res = await fetch(
@@ -69,7 +72,14 @@ function AddPatientContent() {
       );
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+
+      // Handle duplicate email specifically (Error 409 or custom message)
+      if (!res.ok) {
+        if (res.status === 409 || data.error?.includes('unique_patient_email') || data.error?.includes('already exists')) {
+          throw new Error("This email address is already assigned to another patient.");
+        }
+        throw new Error(data.error || "Failed to save patient.");
+      }
 
       if (editMode) {
         setSuccessMsg('Patient updated successfully!');
@@ -86,7 +96,7 @@ function AddPatientContent() {
         });
       }
     } catch (err) {
-      alert(err.message);
+      setErrorMsg(err.message);
     } finally {
       setLoading(false);
     }
@@ -94,7 +104,6 @@ function AddPatientContent() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Dynamic Header based on Mode */}
       <div className="flex items-center gap-3 mb-6">
         <div className="p-3 bg-orange-100 text-[#F17343] rounded-xl">
           {editMode ? <FaEdit size={20} /> : <FaUserPlus size={20} />}
@@ -111,8 +120,15 @@ function AddPatientContent() {
 
       {successMsg && (
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3 text-green-700 animate-in fade-in slide-in-from-top-2">
-          <FaCheckCircle />
+          <FaCheckCircle className="shrink-0" />
           <p className="text-sm font-semibold">{successMsg}</p>
+        </div>
+      )}
+
+      {errorMsg && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-600 animate-in fade-in slide-in-from-top-2">
+          <FaExclamationCircle className="shrink-0" />
+          <p className="text-sm font-semibold">{errorMsg}</p>
         </div>
       )}
 
@@ -176,7 +192,8 @@ function AddPatientContent() {
               value={form.patient_email}
               onChange={handleChange}
               placeholder="patient@example.com"
-              className="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#F17343] focus:ring-4 focus:ring-[#F17343]/10 transition-all outline-none text-[#6D6E70] font-medium"
+              className={`w-full p-3.5 rounded-xl bg-slate-50 border transition-all outline-none text-[#6D6E70] font-medium ${errorMsg.includes('email') ? 'border-red-300 ring-4 ring-red-50' : 'border-slate-200 focus:bg-white focus:border-[#F17343] focus:ring-4 focus:ring-[#F17343]/10'}`}
+              required
             />
           </div>
 
@@ -211,7 +228,6 @@ function AddPatientContent() {
   );
 }
 
-// Main Export
 export default function AddPatient() {
   return (
     <DoctorLayoutWrapper pageTitle="Patient Management">
