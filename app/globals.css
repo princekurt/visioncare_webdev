@@ -19,8 +19,34 @@
   }
 }
 
+/* Base Styles */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  /* Smooth scrolling for mobile checkup history */
+  scroll-behavior: smooth;
+  /* Removes the annoying blue highlight when tapping buttons on mobile */
+  -webkit-tap-highlight-color: transparent;
+  /* Prevents horizontal scroll leaks on mobile */
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar for the Dashboard Tables */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #F17343;
 }

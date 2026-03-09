@@ -69,23 +69,25 @@ export default function PatientDashboard() {
 
   return (
     <PatientLayoutWrapper pageTitle="Overview" patientData={patientInfo}>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
         
         {/* LEFT COLUMN: Main Greeting & Stats */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-2 space-y-6 md:space-y-8">
           
-          {/* Welcome Card */}
-          <div className="bg-[#6D6E70] p-10 rounded-[3rem] text-white shadow-2xl relative overflow-hidden">
+          {/* Welcome Card - Responsive Padding and Text */}
+          <div className="bg-[#6D6E70] p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] text-white shadow-2xl relative overflow-hidden">
             <div className="relative z-10">
-              <span className="bg-[#F17343] px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">Vision Member</span>
-              <h2 className="text-4xl font-black mt-4 uppercase tracking-tight">Hello, {patientInfo?.patient_name?.split(' ')[0]}</h2>
-              <p className="text-white/50 text-xs font-bold mt-2 max-w-xs uppercase tracking-wider italic">Your vision is our priority.</p>
+              <span className="bg-[#F17343] px-4 py-1 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest shadow-lg">Vision Member</span>
+              <h2 className="text-2xl md:text-4xl font-black mt-4 uppercase tracking-tight leading-tight">
+                Hello, <br className="md:hidden" /> {patientInfo?.patient_name?.split(' ')[0]}
+              </h2>
+              <p className="text-white/50 text-[10px] md:text-xs font-bold mt-2 max-w-[180px] md:max-w-xs uppercase tracking-wider italic">Your vision is our priority.</p>
             </div>
-            <FaEye className="absolute -right-10 -bottom-10 text-white/5 text-[15rem]" />
+            <FaEye className="absolute -right-10 -bottom-10 text-white/5 text-[10rem] md:text-[15rem]" />
           </div>
 
-          {/* Quick Metrics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Quick Metrics Grid - Stacks on mobile */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <SummaryCard 
               icon={<FaHistory className="text-[#F17343]" />}
               title="Last Examination"
@@ -103,20 +105,19 @@ export default function PatientDashboard() {
           </div>
 
           {/* Recent Activity Teaser */}
-          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+          <div className="bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 shadow-sm">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Latest Checkup</h3>
-              {/* UPDATED LINK: Pointing to visit-history instead of my-records */}
-              <button onClick={() => router.push('/patient/visit-history')} className="text-[9px] font-black text-[#F17343] uppercase flex items-center gap-1 hover:underline">See All Visits <FaArrowRight /></button>
+              <button onClick={() => router.push('/patient/visit-history')} className="text-[9px] font-black text-[#F17343] uppercase flex items-center gap-1 hover:underline">See All <FaArrowRight /></button>
             </div>
             {records.length > 0 ? (
-              <div className="flex items-center gap-6 p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100 group hover:border-orange-200 transition-all cursor-pointer" onClick={() => router.push('/patient/visit-history')}>
-                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-[#6D6E70] shadow-sm">
+              <div className="flex items-center gap-4 md:gap-6 p-4 md:p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100 group hover:border-orange-200 transition-all cursor-pointer" onClick={() => router.push('/patient/visit-history')}>
+                <div className="shrink-0 w-10 h-10 md:w-12 md:h-12 bg-white rounded-xl flex items-center justify-center text-[#6D6E70] shadow-sm">
                   <FaFileMedical />
                 </div>
-                <div>
-                  <p className="font-black text-sm text-[#6D6E70] uppercase">{records[0].diagnosis || "General Exam"}</p>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{records[0].date_prescribed}</p>
+                <div className="min-w-0">
+                  <p className="font-black text-xs md:text-sm text-[#6D6E70] uppercase truncate">{records[0].diagnosis || "General Exam"}</p>
+                  <p className="text-[9px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{records[0].date_prescribed}</p>
                 </div>
               </div>
             ) : (
@@ -127,15 +128,15 @@ export default function PatientDashboard() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Action Sidebar */}
-        <div className="space-y-8">
+        {/* RIGHT COLUMN: Action Sidebar - Stacks below on mobile */}
+        <div className="space-y-6 md:space-y-8">
           {/* AI Tip Widget */}
-          <div className="bg-orange-50 p-8 rounded-[2.5rem] border border-orange-100 relative overflow-hidden">
+          <div className="bg-orange-50 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-orange-100 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10">
-              <FaLightbulb size={80} className="rotate-12 text-[#F17343]" />
+              <FaLightbulb size={60} className="rotate-12 text-[#F17343] md:size-20" />
             </div>
             <h4 className="text-[10px] font-black text-[#F17343] uppercase tracking-[0.2em] mb-4">Daily Eye Tip</h4>
-            <p className="text-sm font-bold text-[#6D6E70] leading-relaxed relative z-10 italic">
+            <p className="text-xs md:text-sm font-bold text-[#6D6E70] leading-relaxed relative z-10 italic">
               "{getPersonalizedTip()}"
             </p>
           </div>
@@ -157,14 +158,14 @@ export default function PatientDashboard() {
 // Sub-components
 function SummaryCard({ icon, title, value, label, onClick }) {
   return (
-    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+    <div className="bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-md transition-all group">
       <div className="flex items-center gap-4 mb-4">
         <div className="p-3 bg-orange-50 rounded-xl group-hover:bg-[#F17343] group-hover:text-white transition-colors">
           {icon}
         </div>
         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{title}</h4>
       </div>
-      <p className="text-xl font-black text-[#6D6E70] uppercase truncate tracking-tight">{value}</p>
+      <p className="text-lg md:text-xl font-black text-[#6D6E70] uppercase truncate tracking-tight">{value}</p>
       <button onClick={onClick} className="mt-4 text-[9px] font-black text-[#F17343] hover:text-[#6D6E70] transition-colors uppercase tracking-widest">
         {label} →
       </button>
@@ -176,11 +177,11 @@ function QuickLink({ icon, text, onClick }) {
   return (
     <button 
       onClick={onClick}
-      className="w-full flex items-center justify-between p-5 bg-white border border-slate-100 rounded-2xl hover:border-[#F17343] hover:shadow-sm transition-all group"
+      className="w-full flex items-center justify-between p-4 md:p-5 bg-white border border-slate-100 rounded-2xl hover:border-[#F17343] hover:shadow-sm transition-all group"
     >
       <div className="flex items-center gap-4">
         <span className="text-slate-300 group-hover:text-[#F17343] transition-colors">{icon}</span>
-        <span className="text-xs font-black text-[#6D6E70] uppercase tracking-tight">{text}</span>
+        <span className="text-[10px] md:text-xs font-black text-[#6D6E70] uppercase tracking-tight">{text}</span>
       </div>
       <FaArrowRight className="text-slate-200 text-xs group-hover:translate-x-1 transition-transform group-hover:text-[#F17343]" />
     </button>
