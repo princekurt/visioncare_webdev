@@ -33,26 +33,35 @@ function AddPatientContent() {
 
   const fetchPatient = async () => {
     try {
+      setLoading(true);
+      // Fetching from your dynamic API route
       const res = await fetch(`/api/patients/${patientId}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      
+      if (!res.ok) throw new Error(data.error || "Failed to fetch patient data.");
+
+      // Robust check: matches both raw object or wrapped { patient: ... }
+      const p = data.patient ? data.patient : data;
 
       setForm({
-        patient_name: data.patient_name || '',
-        patient_gender: data.patient_gender || 'Male',
-        patient_address: data.patient_address || '',
-        patient_dob: data.patient_dob || '',
-        patient_contact: data.patient_contact || '',
-        patient_email: data.patient_email || ''
+        patient_name: p.patient_name || '',
+        patient_gender: p.patient_gender || 'Male',
+        patient_address: p.patient_address || '',
+        patient_dob: p.patient_dob || '',
+        patient_contact: p.patient_contact || '',
+        patient_email: p.patient_email || ''
       });
     } catch (err) {
-      console.error(err.message);
+      console.error("Fetch error:", err.message);
+      setErrorMsg("Could not load patient details. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    if (errorMsg) setErrorMsg(''); // Clear error when user types
+    if (errorMsg) setErrorMsg(''); 
   };
 
   const handleSubmit = async (e) => {
@@ -73,7 +82,6 @@ function AddPatientContent() {
 
       const data = await res.json();
 
-      // Handle duplicate email specifically (Error 409 or custom message)
       if (!res.ok) {
         if (res.status === 409 || data.error?.includes('unique_patient_email') || data.error?.includes('already exists')) {
           throw new Error("This email address is already assigned to another patient.");
@@ -85,7 +93,9 @@ function AddPatientContent() {
         setSuccessMsg('Patient updated successfully!');
         setTimeout(() => router.push('/doctor/patients'), 1500);
       } else {
-        setSuccessMsg(`Patient ${data.patient.patient_name} registered! Code: ${data.patient.patient_code}`);
+        // Safe check for the nested patient object in POST response
+        const newPatient = data.patient || data;
+        setSuccessMsg(`Patient ${newPatient.patient_name} registered! Code: ${newPatient.patient_code}`);
         setForm({
           patient_name: '',
           patient_gender: 'Male',

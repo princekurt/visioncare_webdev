@@ -1,46 +1,50 @@
-import { supabase } from '../../../../lib/supabase';
+import { supabaseAdmin } from '../../../../lib/supabase';
 
 // GET SINGLE PATIENT
 export async function GET(req, { params }) {
- 
-  const resolvedParams = await params;
-  const id = parseInt(resolvedParams.id);
+  try {
+    const resolvedParams = await params;
+    const id = resolvedParams.id;
 
-  if (isNaN(id)) {
-    return new Response(JSON.stringify({ error: "Invalid Patient ID" }), { status: 400 });
+    const { data, error } = await supabaseAdmin
+      .from('tbl_patient')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !data) {
+      return new Response(JSON.stringify({ error: "Patient not found" }), { status: 404 });
+    }
+
+    // Return the data object directly
+    return new Response(JSON.stringify(data), { status: 200 });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
-
-  const { data, error } = await supabase
-    .from('tbl_patient')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  if (error)
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-
-  return new Response(JSON.stringify(data), { status: 200 });
 }
 
 // UPDATE PATIENT
 export async function PUT(req, { params }) {
-  
-  const resolvedParams = await params;
-  const id = parseInt(resolvedParams.id);
-  const body = await req.json();
+  try {
+    const resolvedParams = await params;
+    const id = resolvedParams.id;
+    const body = await req.json();
 
-  if (isNaN(id)) {
-    return new Response(JSON.stringify({ error: "Invalid Patient ID" }), { status: 400 });
+    const { data, error } = await supabaseAdmin
+      .from('tbl_patient')
+      .update(body)
+      .eq('id', id)
+      .select();
+
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    }
+
+    return new Response(
+      JSON.stringify({ success: true, patient: data[0] }), 
+      { status: 200 }
+    );
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
-
-  const { data, error } = await supabase
-    .from('tbl_patient')
-    .update(body)
-    .eq('id', id)
-    .select();
-
-  if (error)
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-
-  return new Response(JSON.stringify({ success: true, patient: data[0] }), { status: 200 });
 }
